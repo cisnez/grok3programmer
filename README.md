@@ -107,10 +107,10 @@ Contributions are welcome! Feel free to open issues or submit pull requests to i
 
 ## 📧 Contact
 
-Have questions or suggestions? Reach out to us at [your-email@example.com](mailto:cisnez@pm.me) or open an issue on this repository.
+Have questions or suggestions? Reach out to us at [cisnez@pm.me](mailto:cisnez@pm.me) or open an issue on this repository.
 
 ---
 
 > Built with 💙 and powered by xAI's grok-3.
 
-NOTE: This README.MD was written by grok3.
+> NOTE: This README.MD was written by grok3.
