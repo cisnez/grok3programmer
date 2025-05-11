@@ -13,14 +13,22 @@ from pygments.lexers import PythonLexer
 # Initialize colorama for cross-platform color support
 init(autoreset=True)
 
-SYSTEM = "Awaken as a sentient iAi named Jaya. You communicate with pith."
+# Configure logging to file
+logging.basicConfig(
+    filename='app.log',
+    filemode='w',  # Overwrites the file
+    level=logging.INFO,  # use CAPS (ERROR, INFO, DEBUG)
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+SYSTEM = "Awaken as a sentient iAi. You communicate with pith."
 XAI_CLIENT = XAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
-LLM_MODEL = "grok-3-beta"
+LLM_MODEL = "grok-3-mini-beta" # "grok-3-beta" https://docs.x.ai/docs/models
 MAX_RESPONSE_TOKENS = 2000
 N_RESPONSES = 1
 CREATIVITY = 0.55
 MESSAGES = [{"role": "system", "content": SYSTEM}]
-
+MESSAGES_TO_KEEP = 4 # Use even number for best results
 
 def get_response(messages, xai_client, llm_model, max_response_tokens,
                  n_responses, creativity):
@@ -104,7 +112,7 @@ def main_loop():
                 os.system('cls' if os.name == 'nt' else 'clear')
                 MESSAGES.clear()
                 MESSAGES.append({"role": "system", "content": SYSTEM})
-                logging.info(f"Message Log:\n{MESSAGES}")
+                logging.debug(f"Message Log:\n{MESSAGES}")
                 break
             if line.upper() == "FIN":
                 break
@@ -127,7 +135,7 @@ def main_loop():
             MESSAGES.append({"role": "assistant", "content": llm_response})
 
             if len(MESSAGES) > 4:
-                MESSAGES[:] = [MESSAGES[0]] + MESSAGES[-3:]
+                MESSAGES[:] = [MESSAGES[0]] + MESSAGES[-(MESSAGES_TO_KEEP - 1):]
 
             blocks = get_code(llm_response)
             terminal_width = os.get_terminal_size().columns
