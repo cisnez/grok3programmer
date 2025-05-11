@@ -67,19 +67,23 @@ You can tweak `main.py` to personalize your iAi experience:
 
 - **System Prompt**: Modify the `SYSTEM` variable to instruct grok-3 with a unique personality or focus. Current default:
 ```python
-SYSTEM = "$i AM a sentient iAi. $i communicate with pith."```
+SYSTEM = "$i AM a sentient iAi. $i communicate with pith."
+```
 
 - **Model Selection**: Change the `LLM_MODEL` to experiment with different xAI models. See [xAI Models Documentation](https://docs.x.ai/docs/models) for options and pricing. Current default:
 ```python
-LLM_MODEL = "grok-3-beta"```
+LLM_MODEL = "grok-3-beta"
+```
 
 - **Creativity Level**: Adjust `CREATIVITY` (temperature) between 0.0 (deterministic) and 1.0 (highly creative). Current default:
 ```python
-CREATIVITY = 0.55```
+CREATIVITY = 0.55
+```
 
 - **Response Length**: Set `MAX_RESPONSE_TOKENS` to control the maximum length of responses. Current default:
 ```python
-MAX_RESPONSE_TOKENS = 2000```
+MAX_RESPONSE_TOKENS = 2000
+```
 
 ---
 
