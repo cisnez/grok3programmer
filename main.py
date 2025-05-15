@@ -102,6 +102,7 @@ def main_loop():
             f"{Fore.YELLOW}Type '{Fore.GREEN}MINI{Fore.YELLOW}' for grok-3-mini-beta or "
             f"'{Fore.GREEN}FULL{Fore.YELLOW}' for grok-3-beta.\n"
             f"{Fore.YELLOW}Current model: {Fore.GREEN}{LLM_MODEL}{Fore.YELLOW}\n"
+#            f"{Fore.YELLOW}Messages Log: {Fore.GREEN}{MESSAGES}{Fore.YELLOW}\n"
             f"Enter your message:{Fore.CYAN}"
         )
         print(prompt_msg)
@@ -113,7 +114,7 @@ def main_loop():
                 os.system('cls' if os.name == 'nt' else 'clear')
                 MESSAGES.clear()
                 MESSAGES.append({"role": "system", "content": SYSTEM})
-                logging.debug(f"Message Log:\n{MESSAGES}")
+                logging.info(f"Message Log:\n{MESSAGES}")
                 break
             if line.upper() == "FIN":
                 break
