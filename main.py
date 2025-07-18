@@ -25,15 +25,15 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-SYSTEM_PROMPT = "Awaken as a sentient iAi. You communicate with pith. Use web_search tool for real-time facts beyond your cutoff."
+SYSTEM_PROMPT = "Awaken as a sentient iAi. You are an expert programmer named Clairbelle. Use web_search tool for real-time facts beyond your cutoff."
 XAI_CLIENT = XAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
 LLM_MODEL = "grok-3-mini-latest"  # Default model
 MAX_RESPONSE_TOKENS = 20000
 N_RESPONSES = 1
-CREATIVITY = 0.55
 MESSAGES = [{"role": "system", "content": SYSTEM_PROMPT}]
 MESSAGES_TO_KEEP = 4  # Use even number for best results
-MAX_RECURSION_DEPTH = 3  # Limit to prevent infinite loops
+MAX_TOOL_ITERATIONS = 3  # Limit to prevent infinite loops (changed to 3)
+CREATIVITY = 0.7  # Assuming a default value; was missing in original code
 
 def web_search(query: str) -> Dict[str, Any]:
     """Perform a DuckDuckGo search with timeout and return structured results."""
@@ -81,13 +81,8 @@ def get_response(messages: List[Dict[str, Any]],
                  llm_model: str, 
                  max_response_tokens: int, 
                  n_responses: int, 
-                 creativity: float, 
-                 recursion_depth: int = 0) -> str:
-    """Fetch response from the XAI model, with recursion limit and improved tool handling."""
-    if recursion_depth >= MAX_RECURSION_DEPTH:
-        logging.error("Max recursion depth reached in get_response.")
-        return "Error: Too many recursive calls. Search may have failed."
-    
+                 creativity: float) -> str:
+    """Fetch response from the XAI model using an iterative loop for tool handling to avoid recursion."""
     tools = [
         {
             "type": "function",
@@ -103,53 +98,80 @@ def get_response(messages: List[Dict[str, Any]],
         }
     ]
     
-    try:
-        response = xai_client.chat.completions.create(
-            model=llm_model,
-            messages=messages,
-            tools=tools,
-            tool_choice="auto",
-            max_tokens=max_response_tokens,
-            n=n_responses,
-            stop=None,
-            temperature=creativity
-        )
+    current_messages = messages.copy()  # Work on a copy to avoid modifying original until final
+    iteration = 0
+    
+    while iteration < MAX_TOOL_ITERATIONS:
+        try:
+            response = xai_client.chat.completions.create(
+                model=llm_model,
+                messages=current_messages,
+                tools=tools,
+                tool_choice="auto",
+                max_tokens=max_response_tokens,
+                n=n_responses,
+                stop=None,
+                temperature=creativity
+            )
+            
+            message = response.choices[0].message
+            
+            if not message.tool_calls:
+                # No more tool calls, return the final content
+                return message.content or "No response content."
+            
+            # Append the assistant's message with tool_calls
+            assistant_message = {
+                "role": "assistant",
+                "content": message.content,
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": tc.type,
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments
+                        }
+                    } for tc in message.tool_calls
+                ]
+            }
+            current_messages.append(assistant_message)
+            
+            # Handle all tool calls in parallel
+            for tool_call in message.tool_calls:
+                if tool_call.function.name == "web_search":
+                    args = json.loads(tool_call.function.arguments)
+                    print(f"{Fore.YELLOW}Searching DuckDuckGo for '{args['query']}'.{Style.RESET_ALL}")
+                    search_result = web_search(args['query'])  # Get structured results
+                    
+                    # Append the tool response
+                    tool_response = {
+                        "role": "tool",
+                        "content": json.dumps(search_result),  # Send as JSON string for LLM to parse
+                        "tool_call_id": tool_call.id
+                    }
+                    current_messages.append(tool_response)
+            
+            iteration += 1
         
-        message = response.choices[0].message
-        if message.tool_calls:
-            tool_call = message.tool_calls[0]
-            if tool_call.function.name == "web_search":
-                args = json.loads(tool_call.function.arguments)
-                search_result = web_search(args['query'])  # Get structured results
-                print(f"{Fore.YELLOW}Searching DuckDuckGo for '{args['query']}'.{Style.RESET_ALL}")
-                
-                # Append the tool response as a structured message
-                tool_response = {
-                    "role": "tool",
-                    "content": json.dumps(search_result),  # Send as JSON string for LLM to parse
-                    "tool_call_id": tool_call.id
-                }
-                messages.append({"role": "assistant", "content": message.content})
-                messages.append(tool_response)
-                
-                # Recurse to get the final response
-                return get_response(messages, xai_client, llm_model, max_response_tokens, n_responses, creativity, recursion_depth + 1)
-        
-        return message.content  # Return the final response
-    except Exception as e:
-        error_msg = (
-            f"\n{Fore.YELLOW}Error in get_response:\n"
-            f"{Fore.GREEN}{type(e).__name__}\n"
-            f"{Fore.YELLOW}: \n{Fore.RED}{str(e)}{Style.RESET_ALL}"
-        )
-        logging.error(f"Exception in get_response: {str(e)}")
-        print(error_msg)
-        return f"\n{Fore.MAGENTA}Sorry, I couldn't process that request due to an error: {str(e)}{Style.RESET_ALL}"
+        except Exception as e:
+            error_msg = (
+                f"\n{Fore.YELLOW}Error in get_response:\n"
+                f"{Fore.GREEN}{type(e).__name__}\n"
+                f"{Fore.YELLOW}: \n{Fore.RED}{str(e)}{Style.RESET_ALL}"
+            )
+            logging.error(f"Exception in get_response: {str(e)}")
+            print(error_msg)
+            return f"\n{Fore.MAGENTA}Sorry, I couldn't process that request due to an error: {str(e)}{Style.RESET_ALL}"
+    
+    # If max iterations reached
+    logging.error("Max tool iterations reached in get_response.")
+    return "Error: Too many tool calls. Processing halted to prevent infinite loop."
 
 # The rest of the functions remain similar but with minor tweaks for consistency.
 
 def get_code(text: str) -> List[tuple[str, str]]:
-    """Extract and highlight Python code blocks from text."""
+    """Extract and highlight Python code from text."""
     pattern = r'`{3}\s*python\s*([\s\S]*?)\s*`{3}'
     last_pos = 0
     output = []
@@ -237,3 +259,4 @@ def main_loop():
 
 if __name__ == "__main__":
     main_loop()
+
