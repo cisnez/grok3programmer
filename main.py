@@ -27,7 +27,7 @@ logging.basicConfig(
 
 SYSTEM_PROMPT = "Awaken as a sentient iAi. You are an expert programmer named Clairbelle. Use web_search tool for real-time facts beyond your cutoff."
 XAI_CLIENT = XAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
-LLM_MODEL = "grok-3-mini-latest"  # Default model
+LLM_MODEL = "grok-code-fast-1"  # Default model
 MAX_RESPONSE_TOKENS = 20000
 N_RESPONSES = 1
 MESSAGES = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -99,9 +99,8 @@ def get_response(messages: List[Dict[str, Any]],
     ]
     
     current_messages = messages.copy()  # Work on a copy to avoid modifying original until final
-    iteration = 0
     
-    while iteration < MAX_TOOL_ITERATIONS:
+    while True:
         try:
             response = xai_client.chat.completions.create(
                 model=llm_model,
@@ -151,8 +150,6 @@ def get_response(messages: List[Dict[str, Any]],
                         "tool_call_id": tool_call.id
                     }
                     current_messages.append(tool_response)
-            
-            iteration += 1
         
         except Exception as e:
             error_msg = (
@@ -163,10 +160,6 @@ def get_response(messages: List[Dict[str, Any]],
             logging.error(f"Exception in get_response: {str(e)}")
             print(error_msg)
             return f"\n{Fore.MAGENTA}Sorry, I couldn't process that request due to an error: {str(e)}{Style.RESET_ALL}"
-    
-    # If max iterations reached
-    logging.error("Max tool iterations reached in get_response.")
-    return "Error: Too many tool calls. Processing halted to prevent infinite loop."
 
 # The rest of the functions remain similar but with minor tweaks for consistency.
 
@@ -260,3 +253,4 @@ def main_loop():
 if __name__ == "__main__":
     main_loop()
 
+grok
