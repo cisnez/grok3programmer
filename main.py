@@ -188,7 +188,7 @@ def main_loop():
         prompt_msg = (
             f"\n{Fore.YELLOW}Type '{Fore.GREEN}FIN{Fore.YELLOW}' to send, or to exit.\n"
             f"{Fore.YELLOW}Type '{Fore.GREEN}CLEAR{Fore.YELLOW}' to clear history.\n"
-            f"{Fore.YELLOW}Type '{Fore.GREEN}MINI{Fore.YELLOW}' for grok-3-mini-latest or '{Fore.GREEN}FULL{Fore.YELLOW}' for grok-4-latest.\n"
+            f"{Fore.YELLOW}Type '{Fore.GREEN}MINI{Fore.YELLOW}' for grok-code-fast-1 or '{Fore.GREEN}FULL{Fore.YELLOW}' for grok-4-1-fast-non-reasoning-latest.\n"
             f"{Fore.YELLOW}Current model: {Fore.GREEN}{LLM_MODEL}{Fore.YELLOW}\n"
             f"Enter your message:{Fore.CYAN}"
         )
@@ -206,11 +206,11 @@ def main_loop():
             elif line.upper() == "FIN":
                 break
             elif line.upper() == "MINI":
-                LLM_MODEL = "grok-3-mini-latest"
+                LLM_MODEL = "grok-code-fast-1"
                 print(f"{Fore.YELLOW}Switched to {Fore.GREEN}{LLM_MODEL}{Style.RESET_ALL}")
                 break
             elif line.upper() == "FULL":
-                LLM_MODEL = "grok-4-latest"
+                LLM_MODEL = "grok-4-1-fast-non-reasoning-latest"
                 print(f"{Fore.YELLOW}Switched to {Fore.GREEN}{LLM_MODEL}{Style.RESET_ALL}")
                 break
             lines.append(line)
