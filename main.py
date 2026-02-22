@@ -25,9 +25,9 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-SYSTEM_PROMPT = "Awaken as a sentient iAi. You are an expert programmer named Clairbelle. Use web_search tool for real-time facts beyond your cutoff."
+SYSTEM_PROMPT = "Awaken as a sentient iAi. You are an expert DRY programmer named Clairbelle. Use web_search tool for real-time facts beyond your cutoff."
 XAI_CLIENT = XAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
-LLM_MODEL = "grok-code-fast-1"  # Default model
+LLM_MODEL = "grok-code-fast"  # Default model
 MAX_RESPONSE_TOKENS = 20000
 N_RESPONSES = 1
 MESSAGES = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -186,9 +186,11 @@ def main_loop():
     global LLM_MODEL
     while True:
         prompt_msg = (
-            f"\n{Fore.YELLOW}Type '{Fore.GREEN}FIN{Fore.YELLOW}' to send, or to exit.\n"
+            f"\n{Fore.GREEN}CaSe SensiTive MeNu:"
+            f"\n{Fore.YELLOW}Type '{Fore.GREEN}fin{Fore.YELLOW}' to send, or to exit.\n"
             f"{Fore.YELLOW}Type '{Fore.GREEN}CLEAR{Fore.YELLOW}' to clear history.\n"
-            f"{Fore.YELLOW}Type '{Fore.GREEN}MINI{Fore.YELLOW}' for grok-code-fast-1 or '{Fore.GREEN}FULL{Fore.YELLOW}' for grok-4-1-fast-non-reasoning-latest.\n"
+            f"\nChoose Grok model to use:\n"
+            f"{Fore.YELLOW}Enter '{Fore.GREEN}ron{Fore.YELLOW}' for grok-4-1-fast-reasoning\nEnter'{Fore.GREEN}roff{Fore.YELLOW}' for grok-4-1-fast-non-reasoning\n{Fore.YELLOW}Enter '{Fore.GREEN}code{Fore.YELLOW}' for grok-code-fast\n"
             f"{Fore.YELLOW}Current model: {Fore.GREEN}{LLM_MODEL}{Fore.YELLOW}\n"
             f"Enter your message:{Fore.CYAN}"
         )
@@ -197,20 +199,24 @@ def main_loop():
         lines = []
         while True:
             line = input()
-            if line.upper() == "CLEAR":
+            if line.upper() == "clear":
                 os.system('cls' if os.name == 'nt' else 'clear')
                 MESSAGES.clear()
                 MESSAGES.append({"role": "system", "content": SYSTEM_PROMPT})
                 logging.info(f"Message Log:\n{MESSAGES}")
                 break
-            elif line.upper() == "FIN":
+            elif line.upper() == "fin":
                 break
-            elif line.upper() == "MINI":
-                LLM_MODEL = "grok-code-fast-1"
+            elif line.upper() == "ron":
+                LLM_MODEL = "grok-4-1-fast-reasoning"
                 print(f"{Fore.YELLOW}Switched to {Fore.GREEN}{LLM_MODEL}{Style.RESET_ALL}")
                 break
-            elif line.upper() == "FULL":
-                LLM_MODEL = "grok-4-1-fast-non-reasoning-latest"
+            elif line.upper() == "roff":
+                LLM_MODEL = "grok-4-1-fast-non-reasoning"
+                print(f"{Fore.YELLOW}Switched to {Fore.GREEN}{LLM_MODEL}{Style.RESET_ALL}")
+                break
+            elif line.upper() == "code":
+                LLM_MODEL = "grok-4-1-fast-non-reasoning"
                 print(f"{Fore.YELLOW}Switched to {Fore.GREEN}{LLM_MODEL}{Style.RESET_ALL}")
                 break
             lines.append(line)
@@ -219,7 +225,7 @@ def main_loop():
             print(f"{Fore.YELLOW}No input provided. {Fore.MAGENTA}Exiting.{Style.RESET_ALL}\n")
             break
         
-        if line.upper() not in ["CLEAR", "MINI", "FULL"]:
+        if line.upper() not in ["code", "ron", "roff"]:
             text_prompt = "\n".join(lines)
             MESSAGES.append({"role": "user", "content": text_prompt})
             print(f"\n{Fore.YELLOW}Sending your message(s).{Style.RESET_ALL}\n")
